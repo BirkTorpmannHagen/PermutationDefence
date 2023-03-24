@@ -1,0 +1,3 @@
+[submodule "Neural-Network-Steganography"]
+	path = Neural-Network-Steganography
+	url = https://github.com/gaborvecsei/Neural-Network-Steganography.git
