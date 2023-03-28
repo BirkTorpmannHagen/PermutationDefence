@@ -1,16 +1,23 @@
-# This is a sample Python script.
+import torch
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from  StegoSafeModel import StegoSafeModel
+import torchvision
+from torchvision.models.resnet import ResNet34_Weights
+from torchvision.datasets import ImageNet, ImageFolder
+from copy import deepcopy
+from torch.utils.data import DataLoader
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+8 to toggle the breakpoint.
+def eval_models():
+    dataset = ImageFolder(root='~/Datasets/imagenette2/val', transform=torchvision.transforms.ToTensor())
+    model1 = torchvision.models.resnet34(weights=ResNet34_Weights.IMAGENET1K_V1).eval().to("cuda")
+    model2 = deepcopy(model1).eval().to('cuda')
+    model1 = StegoSafeModel(model1).to('cuda')
+    for x,y in DataLoader(dataset, batch_size=1):
+        x = x.to("cuda")
+        y = y.to("cuda")
+        out1 = model1(x)
+        out2 =model2(x)
+        print(torch.allclose(out1, out2, atol=1e-5), torch.argmax(out1), torch.argmax(out2))
 
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+eval_models()

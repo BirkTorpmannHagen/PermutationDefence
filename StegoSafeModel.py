@@ -15,12 +15,12 @@ class StegoSafeModel(nn.Module):
     def permute(self, module, perm=None):
         with torch.no_grad():
             if perm is None:  # previous layer returns unpermuted activations
-                perm = torch.randperm(module.weight.data.size()[0])
+                perm = torch.randperm(module.weight.data.size()[0]).to("cuda")
                 if (perm == torch.arange(module.weight.data.size()[
-                                             0])).all():  # if the permutation is the identity, we need to make sure it's not
+                                             0]).to("cuda")).all():  # if the permutation is the identity, we need to make sure it's not
                     return self.permute(module=module, perm=perm)
 
-            perm_full = torch.arange(module.weight.data.size()[0])
+            perm_full = torch.arange(module.weight.data.size()[0]).to("cuda")
             perm_full[:len(perm)] = perm
             # perm_full = perm
 
@@ -36,8 +36,6 @@ class StegoSafeModel(nn.Module):
                 permuted_channels = torch.index_select(output, 1, pinv)
                 remaining_channels = output[:, len(pinv):]
                 permuted_output = torch.cat((permuted_channels, remaining_channels), 1)
-                out_set = set(output.unique().tolist())
-                new_out_set = set(permuted_output.unique().tolist())
                 return permuted_output
 
             return permute_output
