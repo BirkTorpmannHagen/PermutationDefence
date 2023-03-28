@@ -10,32 +10,20 @@ def check_model_equality(model1, model2):
     return True
 
 
-class Permutor(nn.Module):
-    """
-    Permutes the input channels according to the permutation argument, a list of indexes
-    """
-    def __init__(self, permutation) -> None:
-        super().__init__()
-        self.permutation = permutation
-    
-    def forward(self, x):
-        print("permutor forward")
-        print(x)
-        print(x[self.permutation])
-        return x[self.permutation]
 
 def check_permutable(module):
-    try:
-        module.weight
-    except AttributeError:
-        return False
-    
-    return not isinstance(module, nn.Sequential) and \
-    not isinstance(module, nn.ModuleList) and \
-    not isinstance(module, nn.ModuleDict) and \
-    not isinstance(module, BasicBlock) and \
-    not isinstance(module, Linear) and \
-    module.weight is not None
+    return isinstance(module, nn.Conv2d)
+    # try:
+    #     module.weight
+    # except AttributeError:
+    #     return False
+    #
+    # return not isinstance(module, nn.Sequential) and \
+    # not isinstance(module, nn.ModuleList) and \
+    # not isinstance(module, nn.ModuleDict) and \
+    # not isinstance(module, BasicBlock) and \
+    # not isinstance(module, Linear) and \
+    # module.weight is not None
 
 class PermutePairIterator:
     def __init__(self, model):
