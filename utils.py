@@ -37,7 +37,7 @@ def check_permutable(module):
     not isinstance(module, Linear) and \
     module.weight is not None
 
-class PermuteIterator:
+class PermutePairIterator:
     def __init__(self, model):
         #todo this is ugly, but it works. fix it!
         module_list = model.modules()
@@ -46,6 +46,21 @@ class PermuteIterator:
     def __next__(self):
         try:
             return self.module_list.__next__(), self.module_list.__next__()
+        except StopIteration:
+            raise StopIteration
+
+    def __iter__(self):
+        return self
+    
+class PermuteIterator:
+    def __init__(self, model):
+        #todo this is ugly, but it works. fix it!
+        module_list = model.modules()
+        self.module_list = filter(check_permutable, module_list)
+
+    def __next__(self):
+        try:
+            return self.module_list.__next__()
         except StopIteration:
             raise StopIteration
 
