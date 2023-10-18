@@ -12,15 +12,16 @@ class StegoSafeModel(nn.Module):
         self.model = model
         self.permute_model()
 
+
     def permute(self, module, perm=None):
         with torch.no_grad():
             if perm is None:  # csn define permutations if needed
-                perm = torch.randperm(module.weight.data.size()[0]).to("cuda")
+                perm = torch.randperm(module.weight.data.size()[0])
                 if (perm == torch.arange(module.weight.data.size()[
-                                             0]).to("cuda")).all():  # if the permutation is the identity, we need to make sure it's not
+                                             0])).all():  # if the permutation is the identity, we need to make sure it's not
                     return self.permute(module=module, perm=perm)
 
-            perm_full = torch.arange(module.weight.data.size()[0]).to("cuda")
+            perm_full = torch.arange(module.weight.data.size()[0])
             perm_full[:len(perm)] = perm
             # perm_full = perm
 
