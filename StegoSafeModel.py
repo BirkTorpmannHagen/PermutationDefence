@@ -14,7 +14,7 @@ class StegoSafeModel(nn.Module):
 
     def permute(self, module, perm=None):
         with torch.no_grad():
-            if perm is None:  # previous layer returns unpermuted activations
+            if perm is None:  # csn define permutations if needed
                 perm = torch.randperm(module.weight.data.size()[0]).to("cuda")
                 if (perm == torch.arange(module.weight.data.size()[
                                              0]).to("cuda")).all():  # if the permutation is the identity, we need to make sure it's not
