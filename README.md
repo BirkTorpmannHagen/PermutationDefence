@@ -15,4 +15,4 @@ Permuted model Payload Recovered: False
 
 ```
 
-The maleficnet implementation was forked from (here)[https://github.com/pagiux/maleficnet/tree/master]. Note the experiments defined in `maleficnet.py` do not work and are undergoing refactoring.
+The maleficnet implementation was forked from [here](https://github.com/pagiux/maleficnet/tree/master). Note the experiments defined in `maleficnet.py` do not work and are undergoing refactoring.
