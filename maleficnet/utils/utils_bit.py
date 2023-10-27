@@ -1,81 +1,5 @@
 import struct
-from typing import Union, List
-
 import bitstring
-import torch.nn as nn
-from torchvision.models.resnet import BasicBlock
-from torch.nn.modules.linear import Linear
-
-def check_model_equality(model1, model2):
-    for m1, m2 in zip(filter(check_permutable, model1.modules()), 
-                      filter(check_permutable, model2.modules())):
-        if (m1.weight != m2.weight).any():
-            return False
-    return True
-
-
-
-def check_permutable(module):
-    return isinstance(module, nn.Conv2d)
-    # try:
-    #     module.weight
-    # except AttributeError:
-    #     return False
-    #
-    # return not isinstance(module, nn.Sequential) and \
-    # not isinstance(module, nn.ModuleList) and \
-    # not isinstance(module, nn.ModuleDict) and \
-    # not isinstance(module, BasicBlock) and \
-    # not isinstance(module, Linear) and \
-    # module.weight is not None
-
-class PermutePairIterator:
-    def __init__(self, model):
-        #todo this is ugly, but it works. fix it!
-        module_list = model.modules()
-        self.module_list = filter(check_permutable, module_list)
-
-    def __next__(self):
-        try:
-            return self.module_list.__next__(), self.module_list.__next__()
-        except StopIteration:
-            raise StopIteration
-
-    def __iter__(self):
-        return self
-    
-class PermuteIterator:
-    def __init__(self, model):
-        #todo this is ugly, but it works. fix it!
-        module_list = model.modules()
-        self.module_list = filter(check_permutable, module_list)
-
-    def __next__(self):
-        try:
-            return self.module_list.__next__()
-        except StopIteration:
-            raise StopIteration
-
-    def __iter__(self):
-        return self
-
-
-def str_to_bits(s: str, as_list: bool = False) -> Union[List[int], List[List[int]]]:
-    tmp = []
-    for b in bytes(s, "ascii"):
-        s_bin = bin(b)[2:].rjust(8, "0")
-        tmp.append(s_bin)
-    if as_list:
-        return [list(map(int, list(x))) for x in tmp]
-    return [int(x) for x in "".join(tmp)]
-
-
-def bits_to_str(b: List[int]) -> str:
-    tmp = []
-    for i in range(0, len(b), 8):
-        c = chr(int("".join(map(str, b[i:i + 8])), 2))
-        tmp.append(c)
-    return "".join(tmp)
 
 
 def float_to_bits(f):
@@ -84,6 +8,7 @@ def float_to_bits(f):
 
 
 def bits_to_float(b):
+    
     s = struct.pack('>l', b)
     return struct.unpack('>f', s)[0]
 
@@ -105,7 +30,7 @@ def get_lsb(b):
     return b & 1
 
 
-def modify_bit(n, p, b):
+def modify_bit(n,  p,  b):
     """
     :param n: bit representation of the number you want to modify (call float_to_bits(n))
     :param p: position in which you want to modify the bit [index 0 the rightmost, index 31 the leftmost]
@@ -175,4 +100,4 @@ def get_byte(fl, byte_position):
     :return: string representation of the byte requested
     """
     f = bitstring.BitArray(float=fl, length=32)
-    return f.bin[8 * byte_position:8 * byte_position + 8]
+    return f.bin[8*byte_position:8*byte_position+8]
