@@ -1,6 +1,6 @@
 import torch
 
-from  StegoSafeModel import StegoSafeModel
+from  channelpermutation import StegoSafeModel
 import torchvision
 from torchvision.models.resnet import ResNet34_Weights
 from torchvision.datasets import ImageNet, ImageFolder
@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from maleficnet.injector import Injector
 from maleficnet.extractor import Extractor
 from maleficnet.models.densenet import DenseNet
+
 
 def check_functional_equality(num_samples=10):
     device = "cuda"

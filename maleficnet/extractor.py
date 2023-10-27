@@ -49,7 +49,7 @@ class Extractor:
         self.H, self.G = make_ldpc(
             n, d_v, d_c, systematic=True, sparse=True, seed=seed)
 
-    def extract(self, model, message_length):
+    def extract(self, model, message_length, return_decoded=True):
 
         start = time.time()
         st_dict_next = model.state_dict()
@@ -137,4 +137,7 @@ class Extractor:
         hash_bits = ''.join(str(l) for l in (bits_from_bytes(
             [char for char in hash_str.encode('utf-8')])))
 
+        if return_decoded:
+            return bits_to_str(x[:self.malware_length])
         return str_hash == hash_bits
+
