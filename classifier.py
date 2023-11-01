@@ -18,10 +18,10 @@ from torch.optim.swa_utils import AveragedModel, update_bn
 from torchmetrics.functional import accuracy
 
 class Classifier(LightningModule):
-    def __init__(self, model, lr=1e-3):
+    def __init__(self, model,num_classes, lr=1e-3):
         super().__init__()
-        self.save_hyperparameters()
         self.model = model
+        self.num_classes=num_classes
 
     def forward(self, x):
         out = self.model(x)
@@ -39,7 +39,7 @@ class Classifier(LightningModule):
         logits = self(x)
         loss = F.nll_loss(logits, y)
         preds = torch.argmax(logits, dim=1)
-        acc = accuracy(preds, y, "multiclass")
+        acc = accuracy(preds, y, "multiclass", num_classes=self.num_classes)
 
         if stage:
             self.log(f"{stage}_loss", loss, prog_bar=True)
@@ -54,7 +54,7 @@ class Classifier(LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.SGD(
             self.parameters(),
-            lr=self.hparams.lr,
+            lr=1e-3,
             momentum=0.9,
             weight_decay=5e-4,
         )

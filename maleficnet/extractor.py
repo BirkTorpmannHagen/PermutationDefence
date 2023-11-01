@@ -127,8 +127,6 @@ class Extractor:
         end = time.time()
 
 
-        print(bits_to_str(x[:self.malware_length]))
-
         str_malware = ''.join(str(l) for l in x[:self.malware_length])
         str_hash = ''.join(
             str(l) for l in x[self.malware_length:self.malware_length+self.hash_length])
