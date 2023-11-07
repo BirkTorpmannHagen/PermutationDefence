@@ -53,6 +53,21 @@ def check_payload_integrity(message):
 
 
 if __name__ == '__main__':
+    gru = torch.nn.LSTMCell(10, 20)
+    for name, param in gru.named_parameters():
+        print(name, param.shape)
     # check_functional_equality()
-    check_payload_integrity("Hello, World! This could be malware! But it is not :)")
-
+    # check_payload_integrity("Hello, World! This could be malware! But it is not :)")
+    # from transformers.models.bert import BertModel
+    # from modelmodules import GLUETransformer
+    # from datamodules import GLUEDataModule
+    #
+    # dm = GLUEDataModule(model_name_or_path="albert-base-v2", task_name="cola")
+    # dm.setup("fit")
+    # model = GLUETransformer(
+    #     model_name_or_path="albert-base-v2",
+    #     num_labels=dm.num_labels,
+    #     eval_splits=dm.eval_splits,
+    #     task_name=dm.task_name,
+    # )
+    # print(model.model)

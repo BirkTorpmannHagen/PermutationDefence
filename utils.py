@@ -7,48 +7,41 @@ from torchvision.models.resnet import BasicBlock
 from torch.nn.modules.linear import Linear
 
 def check_model_equality(model1, model2):
-    for m1, m2 in zip(filter(check_permutable, model1.modules()), 
-                      filter(check_permutable, model2.modules())):
+    for m1, m2 in zip(filter(filter_conv2d, model1.modules()),
+                      filter(filter_conv2d, model2.modules())):
+        if (m1.weight != m2.weight).any():
+            return False
+    for m1, m2 in zip(filter(filter_linear, model1.modules()),
+                      filter(filter_linear, model2.modules())):
         if (m1.weight != m2.weight).any():
             return False
     return True
 
 
 
-def check_permutable(module):
+def filter_conv2d(module):
     return isinstance(module, nn.Conv2d)
-    # try:
-    #     module.weight
-    # except AttributeError:
-    #     return False
-    #
-    # return not isinstance(module, nn.Sequential) and \
-    # not isinstance(module, nn.ModuleList) and \
-    # not isinstance(module, nn.ModuleDict) and \
-    # not isinstance(module, BasicBlock) and \
-    # not isinstance(module, Linear) and \
-    # module.weight is not None
 
-class PermutePairIterator:
+def filter_linear(module):
+    return isinstance(module, nn.Linear)
+
+class Conv2DIterator:
     def __init__(self, model):
-        #todo this is ugly, but it works. fix it!
         module_list = model.modules()
-        self.module_list = filter(check_permutable, module_list)
+        self.module_list = filter(filter_conv2d, module_list)
 
     def __next__(self):
         try:
-            return self.module_list.__next__(), self.module_list.__next__()
+            return self.module_list.__next__()
         except StopIteration:
             raise StopIteration
 
     def __iter__(self):
         return self
-    
-class PermuteIterator:
+class LinearIterator:
     def __init__(self, model):
-        #todo this is ugly, but it works. fix it!
         module_list = model.modules()
-        self.module_list = filter(check_permutable, module_list)
+        self.module_list = filter(filter_linear, module_list)
 
     def __next__(self):
         try:
