@@ -4,7 +4,7 @@ import hashlib
 
 import torch
 import numpy as np
-
+from multiprocessing import Pool
 from typing import Optional
 
 from tqdm import tqdm
@@ -127,7 +127,11 @@ class Injector:
         for ch in range(n_chunks):
             chunks.append(self.message[ch * k:ch * k + k])
 
-        encoded = map(lambda x: encode(self.G, x, snr1), chunks)
+        # encoded = map(lambda x: encode(self.G, x, snr1), chunks)
+
+        with Pool(processes=16) as pool: #faster!
+            encoded = pool.starmap(encode, [(self.G, x, snr1) for x in chunks])
+
         for enc in encoded:
             c.extend(enc)
 
@@ -147,16 +151,16 @@ class Injector:
 
         np.random.seed(self.seed)
         filter_indexes = np.random.randint(
-            0, len(models_w), self.CHUNK_SIZE * self.chunk_factor * number_of_chunks, np.int32).tolist()
+            0, len(models_w), self.CHUNK_SIZE * self.chunk_factor * number_of_chunks, np.int32) #in the original work, .tolist() was called here, which increased the runtime by 10x...
 
         with tqdm(total=len(b)) as bar:
             bar.set_description('Injecting')
             current_chunk = 0
             current_bit = 0
             np.random.seed(self.seed)
+            spreading_code = 2 * np.random.randint(0, 2, size=self.CHUNK_SIZE * self.chunk_factor) - 1
             for bit in b:
-                spreading_code = np.random.choice(
-                    [-1, 1], size=self.CHUNK_SIZE * self.chunk_factor)
+
                 current_bit_cdma_signal = gamma * spreading_code * bit
                 current_filter_index = filter_indexes[current_chunk * self.CHUNK_SIZE * self.chunk_factor:
                                                       (current_chunk + 1) * self.CHUNK_SIZE * self.chunk_factor]

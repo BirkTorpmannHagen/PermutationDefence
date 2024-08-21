@@ -1,9 +1,12 @@
 import os
+import time
 
 import numpy as np
 
 import torch.nn.utils.prune as prune
 import pytorch_lightning as pl
+
+import dummy_data_generator
 from modelmodules import Classifier
 from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
 from pl_bolts.datamodules import CIFAR10DataModule
@@ -109,27 +112,31 @@ class MalwareTestBed:
     def collect_data(self, size=1000):
         self.reset_model()
         print(size)
-        payload = "".join(list(np.random.choice(list("abcdefghijklmnopqrstuvwxyz"), size)))
-        print("Payload:", payload)
+        payload = dummy_data_generator.generate_dummy_data(size)
         start_accuracy = self.eval_model(self.module.model)
         injector = Injector(seed=42,
                             device="cuda",
                             malware_payload=payload,
-                            chunk_factor=16)
+                            chunk_factor=8)
 
         # Infect the system 🦠
         extractor = Extractor(seed=42,
                               device="cuda",
                               malware_length=len(injector.payload),
                               hash_length=len(injector.hash),
-                              chunk_factor=16)
+                              chunk_factor=8)
+        inj_start = time.time()
+        print("injecting")
         new_model_sd, message_length, _, _ = injector.inject(self.module.model, 0.0009)
+        print(f"Injection took {time.time()-inj_start} seconds")
         self.module.model.load_state_dict(new_model_sd)
         # self.trainer = pl.Trainer(accelerator="gpu", max_epochs=5, enable_checkpointing=False, logger=False, enable_progress_bar=False)  #retrain to improve performance... needed, but not in the paper
         # self.trainer.fit(model=self.module,datamodule=self.data_module)
         self.trainer.save_checkpoint(f"checkpoints/{self.dataset_name}_{self.model_name}_infected_{size}.ckpt")
+        start = time.time()
+        print("extracting")
         extract = extractor.extract(self.module.model, message_length)
-        print(extract)
+        print(f"Extraction took {time.time()-start} seconds")
         assert extract==payload, f"Extracted Payload != Embedded Payload!"
         infected_performance = self.eval_model(self.module.model)
         safe_model = StegoSafeModel(deepcopy(self.module.model).cuda()).cuda()
@@ -138,10 +145,6 @@ class MalwareTestBed:
         cs = self.integrity(payload, safe_extracted)
         cs_performance = self.eval_model(self.module.model)
         # print()
-        print("Model performance before infection:", start_accuracy)
-        print("Model performance after infection:", infected_performance)
-        print("Model performance after infection and shuffling:", cs_performance)
-        print("Integrity after channel shuffling:", cs)
 
 
         data = [
@@ -152,7 +155,6 @@ class MalwareTestBed:
         pruning = []
         pruning_performance = []
         for amount in [0, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95]:
-            print("Pruning:", amount)
             pruned_model = Classifier.load_from_checkpoint(
                 f"checkpoints/{self.dataset_name}_{self.model_name}_infected_{size}.ckpt", model=deepcopy(self.model),
                 num_classes=self.data_module.num_classes)
@@ -170,22 +172,24 @@ class MalwareTestBed:
             retraining_performance.append(self.eval_model(retrained_model))
             data.append({"Defense": f"Retraining_{i}", "Integrity": retraining[-1], "Performance": retraining_performance[-1]})
         data.append({"Defense": "None", "Integrity": 1, "Performance": self.vanilla_performance})
-        print("Channel Shuffling: ", cs)
-        print("Pruning:", pruning, "performance:", pruning_performance)
-        print("Retraining:", retraining,"performance:", retraining_performance)
         pd.DataFrame(data).to_csv(f"{self.dataset_name}_{self.model_name}_{len(payload)}.csv")
 
 
 if __name__ == '__main__':
-
+    MB = 1024 * 1024
     for model_size, model_constructor in list(zip([18, 34,50,101,152], [resnet18, resnet34, resnet50, resnet101, resnet152])):
         data_module = CIFAR10DataModule("../../Datasets/CIFAR10", batch_size=64, val_split=0.2)
 
         data_module.setup()
         model_instance = model_constructor()
         tb = MalwareTestBed(data_module, model_instance, model_name=f"resnet{model_size}", dataset_name="cifar10")
-        for payload_size in [1000, 5000, 10000, 20000]:
-            tb.collect_data(payload_size)
+        for payload_size in [int(i) for i in [0.1*MB, 0.5*MB, MB, 2*MB, 10*MB]]:
+            try:
+                tb.collect_data(payload_size)
+            except Exception as e:
+                print("paylaod exceeded?")
+                print(e)
+                break
 
     # datasets.load_dataset("glue", "ex")
 
