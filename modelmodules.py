@@ -38,20 +38,22 @@ class Classifier(LightningModule):
         self.num_classes=num_classes
 
     def forward(self, x):
-        out = self.model(x)
-        return F.log_softmax(out, dim=1)
+        return self.model(x)
+
 
     def training_step(self, batch, batch_idx):
+        self.model.train()
         x, y = batch
         logits = self(x)
-        loss = F.nll_loss(logits, y)
+        loss = F.cross_entropy(logits, y)
         self.log("train_loss", loss)
         return loss
 
     def evaluate(self, batch, stage=None):
+        self.model.eval()
         x, y = batch
         logits = self(x)
-        loss = F.nll_loss(logits, y)
+        loss = F.cross_entropy(logits, y)
         preds = torch.argmax(logits, dim=1)
         acc = accuracy(preds, y, "multiclass", num_classes=self.num_classes)
 
@@ -66,14 +68,12 @@ class Classifier(LightningModule):
         self.evaluate(batch, "test")
 
     def configure_optimizers(self):
-        optimizer = torch.optim.SGD(
+        optimizer = torch.optim.Adam(
             self.parameters(),
-            lr=1e-3,
-            momentum=0.9,
-            weight_decay=5e-4,
+            lr=1e-3
         )
         scheduler_dict = {
-            "scheduler": CosineAnnealingWarmRestarts(optimizer, 50, 2)
+            "scheduler": CosineAnnealingWarmRestarts(optimizer, 25, 2)
         }
         return {"optimizer": optimizer, "lr_scheduler": scheduler_dict}
 

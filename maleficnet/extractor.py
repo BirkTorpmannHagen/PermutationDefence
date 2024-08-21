@@ -116,7 +116,7 @@ class Extractor:
         for ch in range(n_chunks):
             chunks.append(y[ch * k:ch * k + k] / gain)
 
-        d = map(lambda x: decode(self.H, x, snr), chunks)
+        d = map(lambda x: decode(self.H, x, snr, maxiter=3000), chunks)
 
         with mp.Pool(mp.cpu_count() - 3, initializer=worker_init, initargs=(lambda x: get_message(self.G, x),)) as pool:
             decoded = pool.map(worker, d)

@@ -18,6 +18,8 @@ class StegoSafeModel(nn.Module):
         self.permute_model()
 
     def permute_conv2d(self, module, perm=None):
+        # print(f"permuting conv layer w {module.weight.shape}")
+
         with torch.no_grad():
             if perm is None:  # can define permutations if needed
                 perm = torch.randperm(module.weight.data.size()[0])
